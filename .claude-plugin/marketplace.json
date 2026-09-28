@@ -1,0 +1,14 @@
+{
+  "name": "wrsr-agents",
+  "description": "Claude Code plugins for Workers & Resources: Soviet Republic modders",
+  "owner": {
+    "name": "TheRealMeowMeow00"
+  },
+  "plugins": [
+    {
+      "name": "wrsr",
+      "source": "./",
+      "description": "WRSR modding knowledge: Workshop formats, TesmioLoader and Republic Mod Loader plugins, reverse engineering, known pitfalls"
+    }
+  ]
+}

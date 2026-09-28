@@ -1,0 +1,19 @@
+{
+  "name": "wrsr",
+  "description": "Workers & Resources: Soviet Republic modding knowledge: Workshop formats, native plugins for TesmioLoader and Republic Mod Loader, reverse engineering, and the pitfalls others already debugged",
+  "author": {
+    "name": "TheRealMeowMeow00"
+  },
+  "homepage": "https://github.com/TheRealMeowMeow00/wrsr-agents",
+  "repository": "https://github.com/TheRealMeowMeow00/wrsr-agents",
+  "license": "CC-BY-4.0",
+  "keywords": [
+    "workers-and-resources",
+    "soviet-republic",
+    "wrsr",
+    "modding",
+    "tesmioloader",
+    "republic-mod-loader",
+    "reverse-engineering"
+  ]
+}
