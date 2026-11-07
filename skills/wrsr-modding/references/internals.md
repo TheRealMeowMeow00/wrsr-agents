@@ -186,14 +186,16 @@ A person is a `0x750`-byte object.
   The game's speed buttons multiply its frame divisor (0.35 normal, 0.05 fast,
   0.01 fastest), so scaling that timer slows everything, movement included.
 - The calendar is `game+0x590` / `+0x594`, advanced by a day tick when the timer
-  at `+0x59C` reaches the day length (WRSR Mail read 60 on 1.1.1.9, TesmioLoader
-  records 63: check before relying on the number). For a daily job, compare the
-  date: a clock derived from the engine timer ran 1.7 to 2.6 times fast.
+  at `+0x59C` passes 60.0 on 1.1.1.9 (read in the exe; TesmioLoader records a
+  day-length constant of 63, which may be another one). For a daily job, compare
+  the date: a clock derived from the engine timer ran 1.7 to 2.6 times fast.
   Many systems run once per calendar day and from nowhere else: pollution
   decay, loans (terms counted in days), fires, random events, expiring
   notifications, price recomputes (days 5, 10, 15, 20, 25 and each month
   change). Slowing only the calendar or only the timer desynchronises the two
   halves.
+- A technical office keeps ticking on a paused game, so a wall-clock timeout in a
+  building tick counts the pause. Seen on 1.1.1.9; other building kinds not checked.
 - The base game's day/night cycle spans thirteen calendar days.
 - Snow season depends on the day of the year and the map's climate (0 to 3).
 
