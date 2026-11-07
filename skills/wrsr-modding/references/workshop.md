@@ -40,7 +40,8 @@ $END
   them from an item of yours rather than inventing values.
 - Items that ship native plugins are commonly published as
   `WORKSHOP_ITEMTYPE_SCRIPT` (an observed convention: the game has no DLL
-  type).
+  type). A `WORKSHOP_ITEMTYPE_BUILDING` item with objects and a `plugins/` folder
+  also exists, with no `rml.json`, for example 3778940406, 3779842468 and 3796699671.
 
 ## Steam page limits
 
@@ -111,3 +112,7 @@ usual. Details: `native-mods.md`.
 - TesmioLoader's building guide treats borrowed base-game geometry as fine for
   local work and to be replaced before publishing.
 - Credit donors, sources and the mods yours builds on in the description.
+- A common tag at the start of every name, such as `[MAIL]`, lets players find a
+  whole family of content, from any author, by one search word.
+- DLC content lives under `media_soviet/dlc3/` and may be absent on a player's
+  disk: Steam ships it as a separate depot.

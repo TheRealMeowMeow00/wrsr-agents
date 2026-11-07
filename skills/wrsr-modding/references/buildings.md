@@ -54,6 +54,8 @@ $TYPE_WORKSHOP
    `C3DDLL64.dll + 0xAC544`. Other keywords in use: `LIGHT`, `LIGHT_RGB`,
    `PLANESHADOW`, `SMOKEPOINTCHANCE`, `MODEL_LOD2`, `EXACTSPECULAR`,
    `REFLECTION`.
+   A donor's file can name sibling materials and numbered variants: copy those too,
+   and drop lines for files that do not exist.
 
 4. **Edit `building.ini`: change the economy, keep the geometry.** Use
    `$NAME_STR "..."` (a literal) rather than `$NAME <id>` (a language-file id).
@@ -88,7 +90,8 @@ $CONSUMPTION fabric 0.008
 
 `$PRODUCTION` and `$CONSUMPTION` are per worker-day. Every resource name goes
 through the engine's resource lookup, so a name the game does not know
-resolves to nothing.
+resolves to nothing. That can crash the game while it loads, so buildings naming a
+plugin's resource must ship and run with that plugin.
 
 ### Storages
 
@@ -100,10 +103,12 @@ $STORAGE_IMPORT_SPECIAL RESOURCE_TRANSPORT_OPEN 40 boards
 $STORAGE_FUEL RESOURCE_TRANSPORT_OIL 8
 ```
 
-Transport class, capacity in tonnes, and for `_SPECIAL` one resource. The
-class must match the resource's own class, or the capacity is zero and the
+Transport class, capacity, and for `_SPECIAL` one resource. The capacity is in
+game units: the window shows it times the resource's factor for that class, so
+300 with a factor of 0.35 reads 105 t. The class must match the resource's own class, or the capacity is zero and the
 line reads `0.00 of 0.00 t`. Two inputs of different classes need two
-storages.
+storages. A plain `$STORAGE` holds only the game's fixed list of goods for that
+class, so a resource a plugin added needs `$STORAGE_SPECIAL`, one line each.
 
 | # | `RESOURCE_TRANSPORT_` | # | `RESOURCE_TRANSPORT_` |
 |---|---|---|---|
@@ -147,6 +152,18 @@ the donor's value, which looks like "the electricity line is broken".
 `$VEHICLE_PARKING_PERSONAL`, `$TEXT_CAPTION`, `$PARTICLE`,
 `$WORKER_RENDERING_AREA`: all are measured against the mesh.
 
+`$PARTICLE factory_*` is not only smoke: the parser adds pollution per line. Read
+in code on 1.1.1.9:
+
+| Particle | big | medium | small |
+|---|---|---|---|
+| `factory_*_black` | not decoded | 7 | 4 |
+| `factory_*_gray` | 6 | 4.2 | 2.4 |
+| `factory_*_white` | not decoded | 2.1 | 1.2 |
+
+For a clean building remove them and any `$POLLUTION_*`. That no pollution remains
+on the pollution map was not yet checked in game.
+
 ### Construction
 
 ```
@@ -171,6 +188,17 @@ drawn as a grid of whole units, bulk goods as a single heap.
 `$WORKING_SFX`, `$MENU_SFX`, `$POLLUTION_SMALL` / `_MEDIUM`,
 `$HEATING_DISABLE`, `$ATTRACTIVE_SCORE`, `$QUALITY_OF_LIVING`,
 `$CIVIL_BUILDING`, `$MOVEABLE_DOOR`, `$UNDERGROUND_MESH`.
+
+`$VEHICLE_LOADING_FACTOR` and `$VEHICLE_UNLOADING_FACTOR` speed up a warehouse's
+stops. `$WORKING_VEHICLES_NEEDED` sets how many vehicles an office runs.
+`$RESOURCE_SOURCE_*` lines give a technical office one destination row each, see
+`services.md`.
+
+Turning a car plant into a factory: change `$TYPE_PRODUCTION_LINE` to
+`$TYPE_FACTORY` and remove `$SUBTYPE_*`, `$PROFESORS_NEEDED`,
+`$ELETRIC_CONSUMPTION_LIVING_WORKER_FACTOR`, `$VEHICLE_PARKING`, `$PARKING_NOT_BLOCK*`
+and any `$RESOURCE_VISUALIZATION` block. Written this way in WRSR Mail, not yet
+seen in game.
 
 `$ENGINE_SPEED` belongs to conveyor and cableway engine buildings
 (`bulk_engine*.ini`); it is not a vehicle setting.
@@ -209,6 +237,8 @@ $END
 | a storage shows `0.00 of 0.00 t` | its class does not match the resource's class |
 | the building produces without power | the donor's `$ELETRIC_WITHOUT_WORKING_FACTOR` |
 | part of the mesh is untextured | a `$SUBMATERIAL` name mismatch, or a copied `$TEXTURE_MTL` path |
+| pollution around a building with no `$POLLUTION_*` | its `$PARTICLE factory_*` lines |
+| a vehicle arrives and keeps its cargo | the good is not on the store's list: see Storages |
 
 The game's own log says `Failed to open ...building.ini` when
 `$OBJECT_BUILDING` names a folder that is not there.

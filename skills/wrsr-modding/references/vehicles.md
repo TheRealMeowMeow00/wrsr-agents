@@ -33,7 +33,7 @@ The most used tokens, with counts over about 2 000 files:
 | `$MOVEMENT_HILL_SPEED`, `$MOVEMENT_HILL_ACCELERATION` | 130 / 112 | behaviour on grades |
 | `$RESOURCE_TRANSPORT_TYPE` | 1619 | a `RESOURCE_TRANSPORT_*` class (table in `buildings.md`) |
 | `$RESOURCE_CAPACITY` | 1663 | capacity in that class's units: passengers, tonnes |
-| `$RESOURCE_ALLOW_ONLY` | 51 | restricts the cargo to one resource |
+| `$RESOURCE_ALLOW_ONLY` | 51 | restricts the cargo to one resource. A name not yet in the resource list is dropped silently, leaving no restriction |
 | `$RESOURCE_VISUALIZATION`, `_JOINT` | 801 / 256 | cargo drawn on the vehicle |
 | `$LOD1`, `$LODDISTANCE1`, `$LOD2`, `$LODDISTANCE2` | about 550 / 350 | levels of detail |
 | `$LIGHT_FORWARD`, `$LIGHT_BACKWARD`, `$LIGHT_BLINKER` | 3722 / 3287 / 469 | light points |
@@ -52,6 +52,16 @@ Rail only:
 | `$TRAINSET`, `$TRAINSET_REVERSE` | a fixed multiple-unit composition |
 | `$TRAIN_FORWARD_AXIS_DISTANCE`, `$TRAIN_BACKWARD_AXIS_DISTANCE` | where the car pivots on the track, in metres from each end. When absent both default to 3 m, which is wrong for long cars: their bogies swing off the rails in tight curves |
 | `$TRAIN_BBOX_FORWARD_CORRECTION`, `$TRAIN_BBOX_BACKWARD_CORRECTION` | corrections to the car's extent (*inferred*) |
+
+An unknown `$RESOURCE_TRANSPORT_TYPE` name loads without complaint as class 18,
+"no class". Why a mod cannot add a real class, and what to do instead:
+`services.md`, Vehicle classes.
+
+Model paths: a vehicle with a `dlc3/vehicles/...` path in `$ALPHA` crashed in
+`C3D_MESH::Render` nine seconds after it was bought, with 299 of 307 Workshop items
+using a bare name there. Bare names from the vehicle's own folder fixed the build
+it appeared in; that the path was the cause is inferred. Drop lines for files that
+do not exist, such as a missing LOD.
 
 Base-game files sometimes write a decimal comma (`32,5`); how the parser reads
 it has not been verified here.

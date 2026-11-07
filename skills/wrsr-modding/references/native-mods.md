@@ -3,8 +3,8 @@
 Part of wrsr-agents (CC BY 4.0). Sources: TesmioLoader (MaxLegend, GPL-3.0)
 `docs/01-architecture.md`, `docs/09-plugins.md` and `src/tesmio_api.h`;
 Republic Mod Loader (Ultimate-Universe, GPL-3.0) `README.md` and
-`Source/docs/`; TLMM (TheRealMeowMeow00, GPL-3.0) `README.md`. Versions as of
-September 2026.
+`Source/docs/`; TLMM (TheRealMeowMeow00, GPL-3.0) `README.md`; WRSR Mail
+(TheRealMeowMeow00, GPL-3.0) for adding a resource. Versions as of November 2026.
 
 ## What a loader is
 
@@ -98,6 +98,33 @@ extern "C" __declspec(dllexport) int TsmPluginStart(void) { return 0; }
 - `tesmio_plugin.h` is compiled into your DLL, which makes the DLL a GPL-3.0
   work.
 
+## Adding a resource from a plugin
+
+The method comes from TesmioLoader's `resources` plugin, and it is GPL-3.0.
+
+1. Hook the resource lookup. Publish on its first call with the base list present,
+   before the parsers resolve names: `$RESOURCE_ALLOW_ONLY` and building tokens need
+   the record to exist by then.
+2. Clone a template record into the vector's **free capacity**, set the name and the
+   caption id, and move `end` only after the records are complete. Never relocate the
+   vector: other code and plugins hold pointers into it. Short of room, add nothing
+   and say so in the log.
+3. A map load clears the vector with `end = begin`: treat a changed `end` as the
+   signal to look again, and drop every cached `Resource*` then.
+4. Serve the caption through a `GetString` import swap, on private ids above the
+   game's. To pick a language, WRSR Mail looks at the game's own text for a known id;
+   that was not yet run on a non-Russian game.
+5. Give it an icon at `resources/<name>.png`, and a price: see `services.md`.
+
+Other plugins may hook the same lookup (Space Race 3814051864 ships a `resources.dll`
+at that address) or fill the same capacity. Test alone as well: free slots with only
+your plugin are what a stranger gets. A real need does not come with it: the game's
+citizen demands run through shops on four literal goods, so a new consumption has to
+be driven by your plugin.
+
+`TsmPluginInit` must return 0 once a hook is installed: a non-zero return unloads the
+DLL and crashes the game.
+
 ## RML-native plugins
 
 ```cpp
@@ -121,6 +148,9 @@ that chains inline hooks when several plugins hook the same target: a later
 hook must match the current bytes and steal at least 14 bytes, and no more
 than the first owner did. Test a plugin on both loaders; file and config
 paths are where they are most likely to differ.
+
+The runtime log is `rml/logs/rml-runtime.log` in the RML item's folder, crash reports
+in `rml/crash-archives`.
 
 ## Shipping a plugin on the Workshop
 

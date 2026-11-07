@@ -1,6 +1,6 @@
 ---
 name: wrsr-modding
-description: "Verified knowledge and hard-won rules for modding Workers & Resources: Soviet Republic (WRSR, W&R, Steam app 784150). Covers Workshop items (building.ini, renderconfig.ini, script.ini, workshopconfig.ini, .mtl and .nmf files, media_soviet, workshop_wip), native DLL plugins for TesmioLoader and Republic Mod Loader and their Workshop packaging, and reverse engineering SOVIET64.exe and C3DDLL64.dll (finding code, hooks, signatures, porting addresses to a new game build). Use this skill whenever the user works on anything for this game, even when they only mention one of these files or folders, a new building, vehicle, train, resource or deposit, a tesmio or RML plugin, or a crash in SOVIET64.exe or C3DDLL64.dll. It prevents crashes others already debugged (BOM in ini files, a $ inside a comment, a missing MATERIALEMISSIVE, a wrong storage class, 13-byte prologues) and saves rediscovering the engine."
+description: "Verified knowledge and hard-won rules for modding Workers & Resources: Soviet Republic (WRSR, W&R, Steam app 784150). Covers Workshop items (building.ini, renderconfig.ini, script.ini, workshopconfig.ini, .mtl and .nmf files, media_soviet, workshop_wip), waste, services and customs, native DLL plugins for TesmioLoader and Republic Mod Loader and their Workshop packaging, and reverse engineering SOVIET64.exe and C3DDLL64.dll (finding code, hooks, signatures, porting addresses to a new game build). Use this skill whenever the user works on anything for this game, even when they only mention one of these files or folders, a new building, vehicle, train, resource or deposit, a tesmio or RML plugin, or a crash in SOVIET64.exe or C3DDLL64.dll. It prevents crashes others already debugged (BOM in ini files, a $ inside a comment, a missing MATERIALEMISSIVE, a wrong storage class, 13-byte prologues) and saves rediscovering the engine."
 ---
 
 # Workers & Resources: Soviet Republic modding
@@ -16,7 +16,7 @@ open one only when the task needs it.
   `SOVIET64.exe` is the game logic, a plain MSVC build. `C3DDLL64.dll` is the
   engine ("C3D"); its 2218 exports keep their MSVC-mangled names, so engine
   signatures come for free. No anti-cheat, no packer, no CFG.
-- Current build (September 2026): v1.1.1.9, PE TimeDateStamp `0x6A3EB6AD`,
+- Current build (November 2026): v1.1.1.9, PE TimeDateStamp `0x6A3EB6AD`,
   10 308 608 bytes. v1.1.1.7 was `0x69C4098C`. The exe has no VERSIONINFO. A
   matching stamp is necessary, not sufficient: one rebuild kept the old stamp,
   so verify bytes before trusting any address.
@@ -64,9 +64,11 @@ open one only when the task needs it.
 4. Clone, do not invent. Start from the closest base-game donor and change
    only what you must. Geometry lines (`$CONNECTION_*`, `$COST_WORK*`,
    `$VEHICLE_STATION`, `$PARTICLE`, `$TEXT_CAPTION`) are measured against the
-   donor's mesh: keep them verbatim.
+   donor's mesh: keep them verbatim. The one exception is a building that must
+   not pollute: `$PARTICLE factory_*` lines add pollution, so drop them.
 5. A storage's transport class must match its resource's class, or it reads
-   `0.00 of 0.00 t` and never fills.
+   `0.00 of 0.00 t` and never fills. A plain `$STORAGE` holds only the game's
+   fixed list of goods: a new resource needs `$STORAGE_SPECIAL`.
 6. If the donor has `buildings/<donor>_e.mtl`, the clone must declare it as
    `MATERIALEMISSIVE`, or the first frame crashes in `C3DDLL64.dll + 0xAC544`.
 7. Adding or removing resources changes the save format, and some plugins
@@ -101,8 +103,9 @@ open one only when the task needs it.
    token and read one donor instead of many.
 3. Published research: TesmioLoader `docs/` (engine internals; its
    `02-findings.md` quotes v1.1.1.7 addresses, the current ones are the
-   `#define`s in its plugin sources), RailPhysics `docs/` (rail), the railspeed
-   and RML sources. Read them before re-deriving anything.
+   `#define`s in its plugin sources), RailPhysics `docs/` (rail), WRSR Mail
+   `docs/` (waste, offices, vehicle classes), the railspeed and RML sources. Read
+   them before re-deriving anything.
 4. Reverse engineering: PE and `.pdata` for function bounds, string
    cross-references to find code, runtime hooks to learn behaviour, and Ghidra
    (headless, on an already analysed project) only to read a decision. See
@@ -128,9 +131,10 @@ Tell your user about these before helping them publish:
 | `references/workshop.md` | making, packaging or uploading any Workshop item |
 | `references/buildings.md` | writing `building.ini`, `renderconfig.ini`, `.mtl`; cloning a building |
 | `references/vehicles.md` | vehicles and trains, `script.ini` |
-| `references/native-mods.md` | writing, packaging or installing a DLL plugin for either loader |
+| `references/native-mods.md` | writing, packaging or installing a DLL plugin for either loader; adding a resource |
 | `references/reverse-engineering.md` | finding code, porting addresses to a new build, patching |
 | `references/internals.md` | engine structures: resources, buildings, electricity, citizens, walking, clocks, deposits, rail, language files |
+| `references/services.md` | waste, technical offices, plugin-driven routes, customs and trade, vehicle classes |
 | `references/pitfalls.md` | something crashes, or silently does nothing |
 
 ## Working economically

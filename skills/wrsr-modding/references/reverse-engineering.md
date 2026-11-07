@@ -96,6 +96,15 @@ what each candidate's body reads.
 6. Import swaps: patch both modules' import tables. When another plugin may
    own a slot, read the slot at call time instead of caching the pointer.
 
+## Before believing a reading
+
+- Check a type number against `BUILDINGTYPE_*` in `SOVIETInstructions.txt` and name
+  a building that has it. Reading a type `0x1F` branch as customs sent one
+  investigation the wrong way: 31 is the electricity connection, customs are 20.
+- A guess about why cargo stays or a window fails is a hypothesis until a log line
+  or the game shows it. Log the actual records before patching: dumping customs
+  stores showed the missing entry in one run.
+
 ## Reading a crash
 
 - `module + rva` locates it. The earliest crash or caught fault in the log is
@@ -116,4 +125,6 @@ Do not copy addresses out of prose. For v1.1.1.9:
 - railspeed's `railspeed.cpp`: signatures for the speed-limit lookup.
 - RailPhysics's `plugins/railphysics/railphysics.cpp`: signatures and offsets
   for the rail update, verified in game on 1.1.1.9.
+- WRSR Mail's `plugins/mail/mail.cpp`: signatures for the waste, office, purchase,
+  resource and window functions, and `docs/waste-system.md` with their addresses.
 - RML keeps a per-exe symbol cache and serves semantic symbols to its plugins.

@@ -3,7 +3,8 @@
 Part of wrsr-agents (CC BY 4.0). Every entry cost somebody at least one
 debugging session. Most come from TesmioLoader's `docs/07-pitfalls.md`
 (MaxLegend, GPL-3.0), which tells each story in full; the rest from
-RailPhysics and railspeed. The rules in `AGENTS.md` are not repeated here.
+RailPhysics, railspeed and WRSR Mail. The rules in `SKILL.md` are not repeated
+here.
 
 ## Files and text
 
@@ -33,6 +34,10 @@ RailPhysics and railspeed. The rules in `AGENTS.md` are not repeated here.
 
 ## Native code
 
+- **A new resource is missing from every fixed list.** Customs and generic stores
+  list their goods in the game's own code: a vehicle arrives and keeps the cargo,
+  with nothing in the log. Shops restock it through generic code from any store
+  nearby, so it can appear where nobody sent it.
 - **Check the build stamp before trusting a single address.** An update in the
   middle of a session silently invalidates everything derived before it.
 - **Hook both import tables.** `C3DDLL64.dll` opens files and resolves strings
@@ -81,6 +86,14 @@ RailPhysics and railspeed. The rules in `AGENTS.md` are not repeated here.
   overlays recompute values instead of reading the simulation's.
 - **A displayed value can have its own code path.** When the simulation obeys a
   patch and the window does not, find the window's copy.
+- **A resource has separate buy and sell prices.** Writing only the buy pair leaves
+  selling and the cargo value on the game's own calculation, and the market table
+  reads snapshots of its own.
+- **A window can count on storages being the kinds it knows.** Extra storages on a
+  container stand crashed its window; a layout value set inside skipped code breaks
+  every row after it.
+- **Buildings on an old map do not get a type's new storages.** They copied the list
+  when they were built. Test on a new map, or add to the instances.
 - **A need has four faces**: the citizen's demand, a per-inhabitant rate, a
   counter the building window prints, and a real mechanic. Suppressing one
   leaves the others.
@@ -102,4 +115,7 @@ RailPhysics and railspeed. The rules in `AGENTS.md` are not repeated here.
   seconds later.
 - The game holds DLLs and logs open: close it before a rebuild, read logs with
   `FileShare.ReadWrite`.
+- If a DLL stays locked after closing, look for a windowless `SOVIET64.exe` left
+  behind, for example by closing before the main menu. It holds the files, and it
+  burns CPU and GPU, which also looks like a frame-rate problem in a second instance.
 - Adding resources breaks save compatibility both ways; test on copies.

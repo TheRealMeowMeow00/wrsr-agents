@@ -3,7 +3,9 @@
 Part of wrsr-agents (CC BY 4.0). Most of this is summarised from TesmioLoader's
 `docs/02-findings.md` and the per-plugin docs (MaxLegend, GPL-3.0), which
 carry the evidence behind every line; the Rail section is from RailPhysics
-(TheRealMeowMeow00, GPL-3.0), verified in game on 1.1.1.9.
+(TheRealMeowMeow00, GPL-3.0), verified in game on 1.1.1.9. Prices and the
+storage kinds were corrected from WRSR Mail (TheRealMeowMeow00, GPL-3.0). Waste,
+offices, routes and customs are in `services.md`.
 
 Everything here is **data**: structure offsets, globals in `.data`, values of
 constants. None of it moved between 1.1.1.7 and 1.1.1.9. Code addresses are
@@ -33,7 +35,7 @@ different: resources, buildings and the calendar hang off the static at
 |---|---|
 | `+0x580`, `+0x588` | balances, roubles and dollars |
 | `+0x590` / `+0x594` | day of the year (0 to 364) / the year |
-| `+0x59C` | time into the current day, a float |
+| `+0x59C` | a float timer that accumulates seconds and advances the date when it reaches the day length. Not a date: treating it as one ran a daily job every 2 s. Use `+0x590` for "once a day" |
 | `+0x5BC` | "Education simulation", > 0 means Complex |
 | `+0x5C8` | "Unsatisfied citizens reaction": 0 small, 1 reasonable, 2 great |
 | `+0x5D4` | pollution enabled |
@@ -42,10 +44,14 @@ different: resources, buildings and the calendar hang off the static at
 | `+0x10330` | `vector<wstring*>`, unused city names |
 | `+0x10348` | `vector<NamePoint*>`, every city: a name, a position, its buildings |
 | `+0x10BD0` | loans, `0x28`-byte records |
+| `+0x114C0`, `+0x114D8`, `+0x114F0`, `+0x11508` | snapshots the market table reads: buy USD, buy RUB, sell USD, sell RUB |
+| `+0x11AF8`, `+0x11B00` | the hidden air customs houses, `zoll_air_west` and `zoll_air_soviet` |
 | `+0x11B08` to `+0x11B10` | `vector<Building*>`, every building |
 | `+0x11B20` | building types, stride `0xBE8` |
 | `+0x11F88`, `+0x11FA0` | queues of buildings whose walking / parking connections need rebuilding |
 | `+0x120A8` | pollution grid, 12-byte cells (count `+0x120C0`, width and height `+0x120B8` / `+0x120BC`) |
+| `+0x127E8` | vehicle tag table, stride `0x44`: name, caption id at `+0x40` |
+| `+0x12840` | vehicle types, stride `0x9F08` |
 
 ## Resources
 
@@ -74,17 +80,19 @@ different: resources, buildings and the calendar hang off the static at
 | `+0x40` | language id of the caption |
 | `+0x44` | price kind: -1 workers, -2 electricity, -3 vehicles, -4 trains, -5 heat, 0 raw, 1 manufactured, 2 to 4 consumer goods |
 | `+0x48` | icon texture, loaded from `resources/<name>.png` (48x48 RGBA), the only asset found by name |
-| `+0x58` / `+0x5C` | price, RUB / USD |
+| `+0x58` / `+0x5C` | buy price, USD / RUB |
+| `+0x60` / `+0x64` | sell price, USD / RUB; customs pays this as is, and a vehicle window's cargo value reads it |
 | `+0x78` / `+0x7C` | base price (`$Economy_BaseRUB` / `_BaseUSD`) |
 | `+0x88` / `+0x8C` | sell / buy multipliers (0.95 / 1.05) |
-| `+0xCC` | 18 transport-class blocks, `0x20` each; `+0x00` of a block is the capacity factor that makes a storage of that class hold this resource |
+| `+0xCC` | 18 transport-class blocks (0 to 17), `0x20` each, ending where `+0x30C` begins; `+0x00` of a block is the capacity factor that makes a storage of that class hold this resource. On screen a storage shows its ini capacity times this factor, and a vehicle's tonnage varies by resource the same way |
 | `+0x30C` | material family (which sorted waste it becomes); -1 for immaterial ones |
 | `+0x318` | the vehicle-load mesh (the only mesh an open-class resource has) |
 | `+0x320` to `+0x338` | the four pile-stage meshes |
 
 - Meshes come from literal paths in the engine's resource table, so a record
   cloned from a template draws the template's meshes whatever the files are
-  called.
+  called. `eletronics` is a safe template for a covered good: it has no cargo
+  mesh.
 - Prices are recomputed from the production chains of the building types; a
   resource no building produces prices at zero regardless of its base price.
   Base prices also drift by a random walk.
@@ -95,7 +103,7 @@ different: resources, buildings and the calendar hang off the static at
 
 | Building offset | What |
 |---|---|
-| `+0x318` | the type descriptor; `+0x360` in it is the `BUILDINGTYPE_*` number (2 living, 3 shop, 6 factory, 7 mine, 8 field, 17 power plant, 18 substation, 19 transformer, 30 unknown) |
+| `+0x318` | the type descriptor; `+0x360` in it is the `BUILDINGTYPE_*` number (2 living, 3 shop, 6 factory, 7 mine, 8 field, 17 power plant, 18 substation, 19 transformer, 20 customs, 30 unknown, 31 electricity connection, 49 technical office, 105 container stand). The build menu's categories are this number; `+0x364` is the subtype (`0x1F` on air customs) |
 | `+0x368` | deposit (mine) type |
 | `+0x604` | >= 1.0 when the building is finished |
 | `+0x970` to `+0x978` | storages, stride `0xE0` |
@@ -111,9 +119,11 @@ different: resources, buildings and the calendar hang off the static at
 | `+0x1130` | set when the grid solver did not reach this node |
 
 A storage: `+0x00` / `+0x08` its slot vector (16-byte slots: `+0x00` the
-`Resource*`, `+0x08` content, `+0x0C` quality), `+0x8C` capacity, `+0x90`
+`Resource*`, `+0x08` content, `+0x0C` quality), `+0x18` a parallel settings
+vector, `+0x84` / `+0x85` import / export flags, `+0x8C` capacity, `+0x90`
 transport class, `+0x88` which `$STORAGE*` token made it (-1 plain, 0 basic,
-1 medium, 2 advanced and mediumadvanced, 3 hotel, 10 carplant, 50 fuel).
+1 medium, 2 advanced and mediumadvanced, 3 hotel, 5 small bin, 6 big bin, 8 and 9
+special, 10 carplant, 50 fuel).
 
 Behaviour worth knowing:
 
@@ -127,6 +137,14 @@ Behaviour worth knowing:
   customer's demand is sold from, whatever `$STORAGE*` token made it.
 - The `building.ini` parser has its own copy of the storage logic; the
   storage builder it resembles is not what runs for `building.ini`.
+- A plain `$STORAGE` of a class has a fixed list of goods from the game (11 for
+  `COVERED`). Unloading finds a place through that list, so a vehicle with
+  anything else keeps its cargo. `$STORAGE_SPECIAL` holds the one good it names.
+- Shops and three similar building kinds restock on their own from any store
+  nearby, through every storage of the building: a storage for a new resource gets
+  filled that way unless it is hidden from those ticks.
+- Pollution comes from the `$POLLUTION_*` tokens and from `$PARTICLE factory_*`
+  lines, which the parser adds up.
 
 ## Citizens
 
@@ -167,7 +185,10 @@ A person is a `0x750`-byte object.
   the engine's `C3D_TIMER::Power`, `PowerTime` and `PowerKmh` (vehicle speeds).
   The game's speed buttons multiply its frame divisor (0.35 normal, 0.05 fast,
   0.01 fastest), so scaling that timer slows everything, movement included.
-- The calendar is `game+0x590` / `+0x594` / `+0x59C`, advanced by a day tick.
+- The calendar is `game+0x590` / `+0x594`, advanced by a day tick when the timer
+  at `+0x59C` reaches the day length (WRSR Mail read 60 on 1.1.1.9, TesmioLoader
+  records 63: check before relying on the number). For a daily job, compare the
+  date: a clock derived from the engine timer ran 1.7 to 2.6 times fast.
   Many systems run once per calendar day and from nowhere else: pollution
   decay, loans (terms counted in days), fires, random events, expiring
   notifications, price recomputes (days 5, 10, 15, 20, 25 and each month
